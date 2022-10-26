@@ -424,7 +424,8 @@ class HillClimbing {
 			auto i = Random<size_t>::random(0, candidates.size() - 1);
 			if (set.find(i) == set.end()) {
 				T cand_val = (*func)(candidates[i].first, candidates[i].second);
-				if (cand_val * ex_multiplier < best_val * ex_multiplier) {
+				T delta = (cand_val - val) * ex_multiplier;
+				if (delta < 0 && std::abs(delta) > 1e-5) {
 					best_val = cand_val;
 					best_state = candidates[i];
 					break;
@@ -444,7 +445,8 @@ class HillClimbing {
 		T best_val = val;
 		for (size_t i = 0; i < candidates.size(); i++) {
 			T cand_val = (*func)(candidates[i].first, candidates[i].second);
-			if (cand_val * ex_multiplier < best_val * ex_multiplier) {
+			T delta = (cand_val - val) * ex_multiplier;
+			if (delta < 0 && std::abs(delta) > 1e-5) {
 				best_val = cand_val;
 				best_state = candidates[i];
 				break;
@@ -547,6 +549,7 @@ public:
 
 		std::vector<State<T>> front = gen_candidates(state);
 		State<T> best = front[0];
+		T best_val = (*func)(best[0], best[1]);
 		bool end = false;
 		while (!end) {
 			std::vector<State<T>> front_candidates;
@@ -560,11 +563,14 @@ public:
 					return (*func)(a[0], a[1]) * ex_multiplier < (*func)(b[0], b[1])* ex_multiplier; }
 			);
 			front = std::vector<State<T>>(front_candidates.begin(), front_candidates.begin() + front.size());
-			if (std::abs(front[0].first - best.first) < step_size && 
-				std::abs(front[0].second - best.second) < step_size) {
+			T val = (*func)(front[0].first, front[0].first);
+			T delta = (val - best_val) * ex_multiplier;
+			if (delta <= 0 && std::abs(delta) > 1e-5) {
+				best = front[0];
 				break;
 			}
 			best = front[0];
+			best_val = val;
 		}
 		return best;
 	}
